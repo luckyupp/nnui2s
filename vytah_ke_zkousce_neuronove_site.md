@@ -1016,7 +1016,233 @@ Nevýhody:
 
 Konvoluční neuronová síť je dopředná síť specializovaná pro obrazová a prostorová data. Používá konvoluční filtry, které se posouvají přes vstup a vytvářejí mapy příznaků. Díky lokálním receptivním polím a sdílení vah má mnohem méně parametrů než plně propojená síť. Pooling snižuje rozměr a zvyšuje robustnost. CNN se učí pomocí backpropagation a její hlubší vrstvy reprezentují stále abstraktnější příznaky.
 
-## 7. Porovnání hlavních typů sítí
+## 7. Bonus: neuronová síť typu Transformer
+
+### 7.1 Co je Transformer
+
+Transformer (Transformer neural network, Transformer architecture) je moderní typ neuronové sítě navržený hlavně pro práci se sekvencemi. Původně se prosadil ve zpracování přirozeného jazyka (natural language processing, NLP), například ve strojovém překladu, sumarizaci, odpovídání na otázky nebo generování textu. Později se princip Transformerů rozšířil i do počítačového vidění, zpracování zvuku, bioinformatiky a multimodálních modelů.
+
+Základní rozdíl proti klasickým rekurentním sítím je v tom, že Transformer nezpracovává sekvenci nutně krok po kroku v čase. Místo rekurence používá mechanismus pozornosti (attention mechanism), konkrétně self-attention. Díky tomu může model přímo určovat, které části vstupu jsou pro sebe navzájem důležité.
+
+Jednoduchá intuice: při čtení věty se význam slova často nedá určit jen z nejbližšího okolí. Slovo může odkazovat na jiné slovo daleko ve větě nebo v předchozím textu. Transformer se učí, na která slova se má při zpracování aktuálního slova "podívat".
+
+### 7.2 K čemu slouží
+
+Transformery se používají pro:
+
+- strojový překlad (machine translation);
+- generování textu (text generation);
+- sumarizaci (summarization);
+- klasifikaci textu (text classification);
+- odpovídání na otázky (question answering);
+- jazykové modelování (language modeling);
+- práci s kódem;
+- analýzu sekvencí;
+- obrazové úlohy ve variantě Vision Transformer (ViT);
+- multimodální modely kombinující text, obraz, zvuk nebo video.
+
+Zkouškově je důležité chápat Transformer jako obecnou architekturu pro modelování vztahů mezi prvky sekvence, ne pouze jako "chatbot".
+
+### 7.3 Proč Transformery vznikly
+
+Před Transformery se pro sekvence často používaly rekurentní neuronové sítě (recurrent neural networks, RNN), LSTM nebo GRU. Ty zpracovávají sekvenci postupně. To má dvě nevýhody:
+
+- dlouhé závislosti se učí obtížně;
+- výpočet je hůře paralelizovatelný, protože další krok závisí na předchozím.
+
+Transformer řeší oba problémy jinak. Pomocí self-attention může model přímo propojit libovolné dvě pozice v sekvenci. Zároveň lze mnoho výpočtů provádět paralelně.
+
+Příklad: ve větě "Student odevzdal skripta, protože je potřeboval ke zkoušce" musí model pochopit, k čemu odkazuje "je". Attention dovolí propojit zájmeno s relevantním slovem i přes více mezilehlých slov.
+
+### 7.4 Tokeny a embeddingy
+
+Transformer nepracuje přímo se slovy jako textem, ale s tokeny (tokens). Token může být celé slovo, část slova, znak nebo jiná jednotka podle použité tokenizace (tokenization).
+
+Každý token se převede na číselný vektor. Tomu se říká embedding (embedding, token embedding). Embedding reprezentuje význam tokenu v prostoru číselných vektorů.
+
+```text
+token -> embedding vector
+```
+
+Podobné tokeny nebo tokeny používané v podobných kontextech mohou mít podobné vektorové reprezentace.
+
+### 7.5 Poziční kódování
+
+Self-attention sama o sobě neobsahuje informaci o pořadí tokenů. Pro větu je ale pořadí zásadní. Věty "pes kousl člověka" a "člověk kousl psa" mají stejná slova, ale jiný význam.
+
+Proto Transformer používá poziční kódování (positional encoding, positional embedding). To je informace přidaná k embeddingům tokenů, aby model věděl, na jaké pozici se token nachází.
+
+```text
+vstup do Transformeru = token embedding + positional encoding
+```
+
+Poziční informace může být pevně definovaná nebo naučená jako další parametry modelu.
+
+### 7.6 Attention mechanism
+
+Pozornost (attention) je mechanismus, který modelu umožňuje při zpracování jedné pozice brát v úvahu jiné pozice sekvence s různou vahou.
+
+Intuice:
+
+- některá slova jsou pro význam aktuálního slova důležitá hodně;
+- jiná jsou méně důležitá;
+- attention spočítá váhy důležitosti.
+
+Výstup pro daný token není jen funkcí tohoto tokenu, ale váženou kombinací informací z ostatních tokenů.
+
+### 7.7 Query, Key, Value
+
+Self-attention se obvykle vysvětluje přes tři vektory:
+
+- query (Q): dotaz, co aktuální pozice hledá;
+- key (K): klíč, podle kterého se pozná relevance jiné pozice;
+- value (V): hodnota, tedy informace, která se přenese dál.
+
+Pro každý token se z jeho embeddingu lineární transformací vytvoří `Q`, `K` a `V`.
+
+Podobnost mezi query jednoho tokenu a key jiného tokenu určuje, jak moc má první token věnovat pozornost druhému.
+
+Zjednodušený vztah scaled dot-product attention:
+
+```text
+Attention(Q, K, V) = softmax(Q K^T / sqrt(dk)) V
+```
+
+kde `dk` je dimenze key vektorů. Dělení odmocninou stabilizuje velikost hodnot před softmaxem.
+
+Co tento vztah znamená:
+
+1. `Q K^T` spočítá podobnosti mezi dotazy a klíči.
+2. `softmax` převede podobnosti na váhy, které sečtené dávají 1.
+3. Tyto váhy se použijí pro vážený součet hodnot `V`.
+
+### 7.8 Self-attention
+
+Self-attention (self-attention mechanism) znamená, že query, key i value vznikají ze stejné sekvence. Každý token tedy může věnovat pozornost ostatním tokenům ve stejném vstupu.
+
+Self-attention je zásadní rozdíl proti klasické dopředné síti. U MLP jsou vstupy zpracovány pevnou strukturou vah. U Transformeru se vazby mezi tokeny dynamicky mění podle konkrétního vstupu.
+
+### 7.9 Multi-head attention
+
+Multi-head attention (multi-head attention) znamená, že model nepočítá jednu attention mapu, ale několik attention "hlav" paralelně.
+
+Smysl:
+
+- jedna hlava může sledovat syntaktické vztahy;
+- jiná může sledovat významové vztahy;
+- další může sledovat dlouhé závislosti;
+- model tak zachytí více typů vztahů najednou.
+
+Výstupy jednotlivých hlav se spojí a dále transformují. Intuice: místo jednoho způsobu "na co se dívat" má model několik různých pohledů na stejnou sekvenci.
+
+### 7.10 Feed-forward část, rezidua a normalizace
+
+Každý blok Transformeru kromě attention obsahuje také dopřednou neuronovou síť (feed-forward network, FFN). Ta se aplikuje na každou pozici zvlášť.
+
+```text
+x -> lineární vrstva -> nelinearita -> lineární vrstva
+```
+
+Attention míchá informace mezi tokeny. Feed-forward část potom transformuje reprezentaci každého tokenu samostatně.
+
+Transformer používá reziduální spojení (residual connection, skip connection):
+
+```text
+výstup = x + vrstva(x)
+```
+
+Smyslem je lepší tok gradientu a snazší trénování hlubokých modelů. Používá se také normalizace vrstvy (layer normalization), která stabilizuje hodnoty aktivací.
+
+### 7.11 Encoder, decoder a typy Transformerů
+
+Původní Transformer pro překlad měl encoder a decoder.
+
+Encoder (encoder) zpracuje vstupní sekvenci a vytvoří její reprezentaci. Decoder (decoder) z této reprezentace generuje výstupní sekvenci.
+
+Encoder-only modely:
+
+- používají hlavně encoder;
+- hodí se pro porozumění textu, klasifikaci, vyhledávání;
+- typickým příkladem je BERT.
+
+Decoder-only modely:
+
+- používají hlavně decoder;
+- generují text postupně token po tokenu;
+- typickým příkladem jsou GPT modely.
+
+Encoder-decoder modely:
+
+- používají obě části;
+- hodí se pro překlad, sumarizaci a převod jedné sekvence na druhou;
+- typickým příkladem je původní Transformer nebo T5.
+
+### 7.12 Masked self-attention
+
+U generativních modelů nesmí model při predikci dalšího tokenu vidět budoucí tokeny. Proto se používá maskovaná self-attention (masked self-attention, causal attention).
+
+Při generování textu:
+
+```text
+model zná tokeny 1 až k
+model predikuje token k+1
+```
+
+Maska zabrání tomu, aby se pozice dívala doprava na budoucnost. To zachovává kauzální generování.
+
+### 7.13 Trénování Transformeru
+
+Transformer se učí pomocí gradientních metod a backpropagation stejně jako jiné neuronové sítě, ale obvykle ve větším měřítku.
+
+U jazykových modelů je běžná úloha predikce dalšího tokenu (next-token prediction):
+
+```text
+vstup: "Neuronová síť se"
+cíl:  "učí"
+```
+
+Model dostane část sekvence a učí se předpovědět následující token. Opakováním nad velkým množstvím textu se učí statistické i významové vztahy v jazyce.
+
+U encoder-only modelů se často používá maskované jazykové modelování (masked language modeling), kde se některé tokeny skryjí a model je doplňuje.
+
+### 7.14 Proč jsou Transformery silné
+
+Hlavní výhody:
+
+- dobře modelují dlouhé závislosti;
+- výpočet attention lze paralelizovat;
+- škálují se s velikostí dat a parametrů;
+- jsou použitelné pro různé typy sekvencí;
+- naučené reprezentace lze využít pro mnoho úloh.
+
+Transformery se staly základem velkých jazykových modelů (large language models, LLMs), protože dokážou z velkého množství textu naučit obecné jazykové a znalostní reprezentace.
+
+### 7.15 Omezení Transformerů
+
+Nevýhody:
+
+- attention má výpočetní náročnost přibližně kvadratickou v délce sekvence;
+- modely potřebují velké množství dat;
+- trénování je výpočetně drahé;
+- výstupy mohou být přesvědčivé, ale fakticky špatné;
+- interpretace attention vah není vždy jednoznačné vysvětlení rozhodnutí;
+- model pracuje se statistickými vztahy, ne s garantovaným porozuměním ve smyslu formální logiky.
+
+U dlouhých sekvencí je hlavním problémem to, že každý token může věnovat pozornost každému jinému tokenu. To je silné, ale drahé.
+
+### 7.16 Srovnání s MLP, CNN a RNN
+
+Proti MLP má Transformer dynamické vazby mezi tokeny podle konkrétního vstupu. MLP má po naučení pevnou transformační strukturu.
+
+Proti CNN není Transformer omezen jen na lokální okolí. CNN má silný lokální induktivní bias, zatímco Transformer může přímo spojit i vzdálené pozice.
+
+Proti RNN zpracuje Transformer mnoho pozic paralelně a lépe zachycuje dlouhé závislosti. RNN má ale přirozenější sekvenční stav a pro krátké nebo malé úlohy může být jednodušší.
+
+### 7.17 Co umět říct u zkoušky
+
+Transformer je neuronová architektura pro práci se sekvencemi založená na self-attention. Vstupní tokeny se převedou na embeddingy, doplní se poziční informace a v každé vrstvě se počítá, které tokeny jsou pro sebe důležité. Self-attention používá vektory query, key a value. Multi-head attention umožňuje sledovat více typů vztahů paralelně. Transformer se učí pomocí backpropagation a je základem moderních jazykových modelů. Jeho výhodou je schopnost modelovat dlouhé závislosti a paralelizace, nevýhodou vysoká výpočetní náročnost, zejména pro dlouhé sekvence.
+
+## 8. Porovnání hlavních typů sítí
 
 | Síť | Anglicky | Typ učení | Typická úloha | Hlavní princip | Hlavní omezení |
 |---|---|---|---|---|---|
@@ -1025,8 +1251,9 @@ Konvoluční neuronová síť je dopředná síť specializovaná pro obrazová 
 | Kohonenova mapa | self-organizing map, SOM | bez učitele | shlukování | vítěz a okolí se posouvají ke vstupu | volba počtu neuronů, interpretace |
 | Dopředná vícevrstvá síť | multilayer feedforward network, MLP | s učitelem | aproximace, klasifikace, predikce | backpropagation přes vrstvy | volba topologie, lokální minima, přeučení |
 | Konvoluční síť | convolutional neural network, CNN | s učitelem | obrazy, video | filtry, sdílení vah, pooling | data, výpočetní náročnost, interpretace |
+| Transformer | Transformer | s učitelem / self-supervised | text, sekvence, multimodální data | self-attention mezi tokeny | výpočetní náročnost, data, délka kontextu |
 
-## 8. Slovníček pojmů
+## 9. Slovníček pojmů
 
 - Umělá neuronová síť - artificial neural network, ANN
 - Umělý neuron - artificial neuron
@@ -1099,8 +1326,28 @@ Konvoluční neuronová síť je dopředná síť specializovaná pro obrazová 
 - Plně propojená vrstva - fully connected layer
 - ReLU - rectified linear unit
 - Softmax - softmax
+- Transformer - Transformer
+- Token - token
+- Tokenizace - tokenization
+- Embedding - embedding
+- Poziční kódování - positional encoding
+- Attention - attention
+- Self-attention - self-attention
+- Query - query
+- Key - key
+- Value - value
+- Multi-head attention - multi-head attention
+- Encoder - encoder
+- Decoder - decoder
+- Maskovaná self-attention - masked self-attention
+- Kauzální attention - causal attention
+- Feed-forward network - feed-forward network, FFN
+- Reziduální spojení - residual connection
+- Normalizace vrstvy - layer normalization
+- Jazykový model - language model
+- Predikce dalšího tokenu - next-token prediction
 
-## 9. Zkouškové otázky s odpověďmi
+## 10. Zkouškové otázky s odpověďmi
 
 ### Co je umělá neuronová síť?
 
@@ -1138,7 +1385,15 @@ Znamená to, že dopředná vícevrstvá síť s vhodnou strukturou a nelineárn
 
 Protože obraz má lokální prostorovou strukturu. CNN používá lokální filtry, sdílení vah a pooling. Tím snižuje počet parametrů, zachovává prostorovou informaci a učí se příznaky od jednoduchých hran až po složité objekty.
 
-## 10. Nejkratší opakovací mapa
+### Co je Transformer a proč je důležitý?
+
+Transformer je neuronová architektura pro sekvenční data založená na self-attention. Každý token může při výpočtu své reprezentace věnovat pozornost jiným tokenům v sekvenci. Díky tomu Transformer dobře zachycuje dlouhé závislosti a lze ho efektivně paralelizovat. Je základem moderních jazykových modelů.
+
+### Jaký je rozdíl mezi attention a klasickým pevným propojením?
+
+U klasické vrstvy jsou váhy po naučení pevné pro všechny vstupy. U attention se váhy důležitosti mezi tokeny počítají dynamicky podle konkrétní sekvence. Model se tedy pro každý vstup rozhoduje, které části kontextu jsou relevantní.
+
+## 11. Nejkratší opakovací mapa
 
 Neuron = vážený součet + bias + aktivační funkce.  
 Síť = propojené neurony uspořádané do topologie.  
@@ -1148,3 +1403,4 @@ Hopfield = rekurentní autoasociativní paměť.
 Kohonen = samoorganizace a shlukování bez učitele.  
 MLP/DVS = nelineární aproximace pomocí vrstev a backpropagation.  
 CNN = konvoluční filtry, sdílení vah a pooling pro obrazová data.
+Transformer = self-attention pro vztahy mezi tokeny v sekvenci.
